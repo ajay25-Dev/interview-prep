@@ -50,9 +50,10 @@ async function handleProxy(
 
     return proxyResponse;
   } catch (error) {
-    console.error("Proxy request failed:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`Proxy request failed for ${targetUrl}:`, errorMessage);
     return NextResponse.json(
-      { error: "Failed to proxy request" },
+      { error: "Failed to proxy request", details: errorMessage, targetUrl },
       { status: 502 }
     );
   }
