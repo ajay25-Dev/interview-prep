@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle2, AlertCircle, Loader } from "lucide-react"
+import { apiPost } from "@/lib/api-client"
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -62,29 +63,24 @@ export default function OnboardingPage() {
   const extractJDInfo = async (jdText: string) => {
     setExtractingJD(true)
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"
-      const response = await fetch(`${backendUrl}/api/interview-prep/extract-jd`, {
-        method: "POST",
-        headers: {
-          "X-User-Id": resolveUserId(),
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const data = await apiPost<any>(
+        "/api/interview-prep/extract-jd",
+        {
           job_description: jdText,
-        }),
-      })
+        },
+        {
+          "X-User-Id": resolveUserId(),
+        }
+      )
 
-      if (response.ok) {
-        const data = await response.json()
-        setExtractedJDInfo(data)
-        
-        setFormData((prev) => ({
-          ...prev,
-          target_role: data.role_title || prev.target_role,
-          current_skills: data.key_skills || prev.current_skills,
-          experience_level: data.experience_level || prev.experience_level,
-        }))
-      }
+      setExtractedJDInfo(data)
+
+      setFormData((prev) => ({
+        ...prev,
+        target_role: data.role_title || prev.target_role,
+        current_skills: data.key_skills || prev.current_skills,
+        experience_level: data.experience_level || prev.experience_level,
+      }))
     } catch (err) {
       console.error("Failed to extract JD info:", err)
     } finally {
@@ -148,43 +144,29 @@ export default function OnboardingPage() {
     setError("")
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"
-      
-      const response = await fetch(`${backendUrl}/api/interview-prep/profile`, {
-        method: "POST",
-        headers: getHeaders(true),
-        body: JSON.stringify({
+      const profileData = await apiPost<any>(
+        "/api/interview-prep/profile",
+        {
           ...formData,
           preparation_timeline_weeks: Number(formData.preparation_timeline_weeks) || 12,
           current_skills: formData.current_skills ?? [],
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to save profile")
-      }
-
-      const profileData = await response.json()
+        },
+        getHeaders(true)
+      )
       
       const jdDataStr = localStorage.getItem("jd_data")
       
       if (jdDataStr) {
         const jdData = JSON.parse(jdDataStr)
-        
-        const planResponse = await fetch(`${backendUrl}/api/interview-prep/plan/generate`, {
-          method: "POST",
-          headers: getHeaders(true),
-          body: JSON.stringify({
+
+        const plan = await apiPost<any>(
+          "/api/interview-prep/plan/generate",
+          {
             profile_id: profileData.id,
             jd_id: jdData.jd_id,
-          }),
-        })
-
-        if (!planResponse.ok) {
-          throw new Error("Failed to generate plan")
-        }
-
-        const plan = await planResponse.json()
+          },
+          getHeaders(true)
+        )
         
         localStorage.removeItem("jd_data")
         

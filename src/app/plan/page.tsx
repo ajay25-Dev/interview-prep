@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Loader,
 } from "lucide-react"
+import { apiGet } from "@/lib/api-client"
 
 interface KPI {
   name: string
@@ -102,19 +103,10 @@ export default function PlanPage() {
   useEffect(() => {
     const fetchPlan = async () => {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"
-        const response = await fetch(
-          `${backendUrl}/api/interview-prep/plan/${planId || ""}`,
-          {
-            headers: getHeaders(),
-          }
+        const data = await apiGet<any>(
+          `/api/interview-prep/plan/${planId || ""}`,
+          getHeaders()
         )
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch plan")
-        }
-
-        const data = await response.json()
         const planContent = data.plan_content || data
         console.log("Plan data received:", planContent)
         console.log("Subjects covered:", planContent?.subjects_covered)

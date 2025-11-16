@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Upload, FileText, ArrowLeft, File, Type } from "lucide-react"
+import { apiPostFormData, apiPost } from "@/lib/api-client"
 
 export default function UploadJDPage() {
   const router = useRouter()
@@ -55,7 +56,6 @@ export default function UploadJDPage() {
     setError("")
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"
       let savedJD
 
       if (uploadMethod === "file") {
@@ -67,49 +67,31 @@ export default function UploadJDPage() {
         const formData = new FormData()
         formData.append("file", fileInput.files[0])
 
-        const saveResponse = await fetch(`${backendUrl}/api/interview-prep/jd/upload-file`, {
-          method: "POST",
-          headers: { "X-User-Id": resolveUserId() },
-          body: formData,
-        })
-
-        if (!saveResponse.ok) {
-          const errorText = await saveResponse.text()
-          throw new Error(errorText || "Failed to upload file")
-        }
-
-        savedJD = await saveResponse.json()
+        savedJD = await apiPostFormData<{ id: string }>(
+          "/api/interview-prep/jd/upload-file",
+          formData,
+          { "X-User-Id": resolveUserId() }
+        )
       } else {
-        const saveResponse = await fetch(`${backendUrl}/api/interview-prep/jd/upload`, {
-          method: "POST",
-          headers: getHeaders(true),
-          body: JSON.stringify({
+        savedJD = await apiPost<{ id: string }>(
+          "/api/interview-prep/jd/upload",
+          {
             job_description: jdText,
             source_type: "paste",
-          }),
-        })
-
-        if (!saveResponse.ok) {
-          throw new Error("Failed to save job description")
-        }
-
-        savedJD = await saveResponse.json()
+          },
+          getHeaders(true)
+        )
       }
 
       if (!savedJD?.id) {
         throw new Error("Missing job description identifier")
       }
 
-      const analyzeResponse = await fetch(`${backendUrl}/api/interview-prep/jd/${savedJD.id}/analyze`, {
-        method: "POST",
-        headers: getHeaders(),
-      })
-
-      if (!analyzeResponse.ok) {
-        throw new Error("Failed to analyze job description")
-      }
-
-      const jdAnalysis = await analyzeResponse.json()
+      const jdAnalysis = await apiPost(
+        `/api/interview-prep/jd/${savedJD.id}/analyze`,
+        {},
+        getHeaders()
+      )
 
       localStorage.setItem("jd_data", JSON.stringify({
         jd_id: savedJD.id,
