@@ -13,8 +13,26 @@ import {
   Clock,
   ChevronRight,
   Zap,
-  Award
+  Award,
+  LucideIcon
 } from "lucide-react"
+
+interface StatCardProps {
+  title: string
+  completed: number
+  total: number
+  progress: number
+  icon: LucideIcon
+  color: string
+}
+
+interface RecentActivity {
+  type: 'coding' | 'behavioral' | 'system-design'
+  title: string
+  status: 'completed' | 'in-progress'
+  time: string
+  difficulty: string
+}
 
 export function InterviewDashboard() {
   const stats = {
@@ -24,7 +42,7 @@ export function InterviewDashboard() {
     mockInterviews: { completed: 2, total: 10, progress: 20, color: "from-green-500 to-green-600" }
   }
 
-  const recentActivity = [
+  const recentActivity: RecentActivity[] = [
     { type: "coding", title: "Two Sum - Easy", status: "completed", time: "2 hours ago", difficulty: "Easy" },
     { type: "behavioral", title: "Tell me about yourself", status: "completed", time: "1 day ago", difficulty: "Medium" },
     { type: "system-design", title: "Design URL Shortener", status: "in-progress", time: "2 days ago", difficulty: "Hard" },
@@ -35,7 +53,7 @@ export function InterviewDashboard() {
     { title: "System Design Practice", date: "Friday, 10:00 AM", type: "practice", icon: BookOpen },
   ]
 
-  const StatCard = ({ title, completed, total, progress, icon: Icon, color }) => (
+  const StatCard = ({ title, completed, total, progress, icon: Icon, color }: StatCardProps) => (
     <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${color} p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105`}>
       <div className="absolute -right-8 -top-8 h-32 w-32 bg-white/10 rounded-full"></div>
       <div className="relative z-10">
@@ -187,13 +205,13 @@ export function InterviewDashboard() {
           <CardContent className="pt-6">
             <div className="space-y-4">
               {recentActivity.map((activity, index) => {
-                const iconColor = {
+                const iconColor: Record<RecentActivity['type'], string> = {
                   'coding': 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
                   'behavioral': 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
                   'system-design': 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
                 }
                 
-                const badgeColor = {
+                const badgeColor: Record<RecentActivity['status'], string> = {
                   'completed': 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
                   'in-progress': 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
                 }
