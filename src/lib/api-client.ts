@@ -13,11 +13,21 @@ function buildRequestUrl(path: string): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
 
   if (normalizedPath.startsWith("/api/")) {
-    if (isProduction) {
-      return normalizedPath;
+    if (!isProduction) {
+      const frontendUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+      return `${frontendUrl.replace(/\/$/, "")}${normalizedPath}`;
     }
-    const frontendUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    return `${frontendUrl.replace(/\/$/, "")}${normalizedPath}`;
+    if (shouldProxyBackendCalls) {
+      return `/api/proxy${normalizedPath}`;
+    }
+    return normalizedPath;
+  }
+
+  if (normalizedPath.startsWith("/v1/")) {
+    if (shouldProxyBackendCalls) {
+      return `/api/proxy${normalizedPath}`;
+    }
+    return `${devBaseUrl}${normalizedPath}`;
   }
 
   if (shouldProxyBackendCalls) {
